@@ -1,0 +1,80 @@
+pipeline {
+
+    agent {
+        node {
+        label 'master'
+        }
+    }
+    
+    options {
+        timestamps()
+    }
+
+    stages {
+        
+        stage('Update GITLAB Server') {
+            steps { 
+                sh 'ssh sg@ansible \'ansible-playbook /etc/ansible/my_playbook/update_server_with_var.yml -e "MYHOST=gitlab"\''
+            }    
+        }
+
+        stage('Update JENKINS Server') {
+            steps {
+                sh 'ssh sg@ansible \'ansible-playbook /etc/ansible/my_playbook/update_server_with_var.yml -e "MYHOST=jenkins"\''
+            }
+        }
+
+        stage('Update OWNCLOUD Server') {
+            steps {
+                sh 'ssh sg@ansible \'ansible-playbook /etc/ansible/my_playbook/update_server_with_var.yml -e "MYHOST=owncloud"\''
+            }
+        }
+
+        stage('Update PROMETHEUS Server') {
+            steps {
+                sh 'ssh sg@ansible \'ansible-playbook /etc/ansible/my_playbook/update_server_with_var.yml -e "MYHOST=prometheus"\''
+            }
+        }
+
+        stage('Update ZABBIX Server') {
+            steps {
+                sh 'ssh sg@ansible \'ansible-playbook /etc/ansible/my_playbook/update_server_with_var.yml -e "MYHOST=zabbix"\''
+            }
+        }
+
+        stage('Update PI-HOLE Server') {
+            steps {
+                sh 'ssh sg@ansible \'ansible-playbook /etc/ansible/my_playbook/update_server_with_var.yml -e "MYHOST=pi-hole"\''
+            }
+        }
+
+        stage('Update LOGSERVER Server') {
+            steps {
+                sh 'ssh sg@ansible \'ansible-playbook /etc/ansible/my_playbook/update_server_with_var.yml -e "MYHOST=logserver"\''
+            }
+        }
+            
+        stage('Update ANSIBLE Server') {
+            steps {
+                sh 'ssh sg@ansible \'ansible-playbook /etc/ansible/my_playbook/update_server_with_var.yml -e "MYHOST=ansible"\''
+            }
+        }
+    }
+
+    environment {
+            EMAIL_TO = 'Serhiy_Gurin@ukr.net'
+    }
+    
+    post {
+        failure { 
+           emailext body: 'Check console output at $BUILD_URL to view the results. \n\n ${CHANGES} \n\n -------------------------------------------------- \n${BUILD_LOG, maxLines=100, escapeHtml=false}',
+                    to: "${EMAIL_TO}",
+                    subject: 'Build failed in Jenkins: $PROJECT_NAME - #$BUILD_NUMBER'
+            }
+        fixed {
+            emailext body: 'Check console output at $BUILD_URL to view the results.', 
+                     to: "${EMAIL_TO}", 
+                     subject: 'Jenkins build is back to normal: $PROJECT_NAME - #$BUILD_NUMBER'
+        }
+    }
+} 

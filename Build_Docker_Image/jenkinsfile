@@ -1,0 +1,66 @@
+pipeline {
+
+    agent {
+        node {
+        label 'docker'
+        }
+    }
+
+    options {
+        timestamps()
+    }
+
+    environment {
+        DOCKER_ACCAUNT = 'serhiygurin'
+        DOCKER_REPOSITORY = 'sg_web'
+        IMAGE_NAME = "${env.DOCKER_ACCAUNT}/${env.DOCKER_REPOSITORY}"
+        IMAGE_TAG = "v$BUILD_NUMBER"
+        CONTAINER_NAME = "wedsite-v$BUILD_NUMBER"
+    }
+
+    stages {
+           
+        stage('Clone Repository from GitLab') {
+            steps { 
+                  sh '''
+                     rm -Rf /home/jenkins/workspace/Build_Docker_Image/docker
+                     git clone git@gitlab:SG/docker.git
+                     '''
+            }
+        }
+
+        stage('Build Docker Image') {   
+            steps {
+                sh "docker build -t $IMAGE_NAME:$IMAGE_TAG /home/jenkins/workspace/Build_Docker_Image/docker/docker_app/"  
+            }
+        }
+
+        stage('Stop Old Docker Container') {
+            steps {
+                sh '''
+                   docker stop $(docker ps -a -q)
+                   docker rm $(docker ps -a -q)
+                   '''
+            }
+        }
+
+        stage('Run New Docker Container') {
+            steps {
+                sh "docker run -d --name $CONTAINER_NAME -p 8080:80 $IMAGE_NAME:$IMAGE_TAG" 
+            }
+        }
+
+        stage('Login on Docker Hub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                sh 'docker login -u $USERNAME -p $PASSWORD'}
+            }
+        }
+
+        stage('Deploy Docker Image in Docker Hub') {
+            steps {
+                sh "docker push $IMAGE_NAME:$IMAGE_TAG"
+            }
+        }
+    }
+}

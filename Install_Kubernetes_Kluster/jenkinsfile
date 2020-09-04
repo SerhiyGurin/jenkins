@@ -1,0 +1,45 @@
+pipeline {
+
+    agent {
+        node {
+        label 'master'
+        }
+    }
+
+    options {
+        timestamps()
+    }
+
+    stages {
+           
+        stage('Initial user') {
+            steps { 
+                sh 'ssh sg@ansible.home.local \'ansible-playbook /etc/ansible/kubernetes/initial.yml -e "MYHOST=kubernetes_cluster"\''
+            }
+        }
+
+        stage('Swap off in Cluster Hosts') {
+            steps {
+                sh 'ssh sg@ansible.home.local \'ansible-playbook /etc/ansible/kubernetes/swap_off.yml -e "MYHOST=kubernetes_cluster"\''
+            }
+        }
+
+        stage('Install kube-dependencies') {
+            steps {
+                sh 'ssh sg@ansible.home.local \'ansible-playbook /etc/ansible/kubernetes/kube-dependencies.yml -e "MYHOST=kubernetes_cluster"\''
+            }
+        }
+
+        stage('Initialize the cluster and install Flannel') {
+            steps {
+                sh 'ssh sg@ansible.home.local \'ansible-playbook /etc/ansible/kubernetes/master.yml -e "MYHOST=masters"\''
+            }
+        }
+
+        stage('Initialize Workers Node') {
+            steps { 
+                sh 'ssh sg@ansible.home.local \'ansible-playbook /etc/ansible/kubernetes/workers.yml\'' 
+            }
+        }     
+    }
+}    
