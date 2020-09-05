@@ -12,10 +12,10 @@ pipeline {
 
     environment {
         DOCKER_ACCAUNT = 'serhiygurin'
-        DOCKER_REPOSITORY = 'web-php'
+        DOCKER_REPOSITORY = 'webphp'
         IMAGE_NAME = "${env.DOCKER_ACCAUNT}/${env.DOCKER_REPOSITORY}"
         IMAGE_TAG = "v$BUILD_NUMBER"
-        CONTAINER_NAME = "web-php-v$BUILD_NUMBER"
+        CONTAINER_NAME = "${env.DOCKER_REPOSITORY}_${env.IMAGE_TAG}"
     }
 
     stages {
