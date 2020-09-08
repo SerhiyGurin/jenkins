@@ -1,0 +1,30 @@
+pipeline {
+
+    agent {
+        node {
+        label 'master'
+        }
+    }
+
+    options {
+        timestamps()
+    }
+
+    stages {
+           
+        stage('Clone Repository from GitLab') {
+            steps { 
+                  sh '''
+                     ssh sg@ansible \'rm -Rf /home/sg/website-1\'
+                     ssh sg@ansible \'git clone git@gitlab.sg.loc:SG/website-1.git\'
+                     '''
+            }  
+        }
+
+        stage('Deploy site on WEB-SERVER') {
+            steps {
+                sh 'ssh sg@ansible \'ansible-playbook /etc/ansible/my_playbook/my_site_deploy.yaml -e "MYHOST=vpn-server"\''
+            }
+        }
+    }
+}                     
